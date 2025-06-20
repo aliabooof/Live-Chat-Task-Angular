@@ -6,6 +6,7 @@ import { ChatSettings } from '../../models/chat-settings.model';
 import { Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { environment } from '../../environment/environment';
 
 @Component({
   selector: 'app-user-chat',
@@ -25,7 +26,7 @@ export class UserChatComponent implements OnInit, OnDestroy {
   settings: ChatSettings = { maxCharacters: 500, maxVoiceMinutes: 5, inactivityTimeoutMinutes: 1 };
   isRecording = false;
   recordingTimer = 0;
-  
+  apiUrl=environment.apiUrl;
   private currentUserId = '';
   private subscriptions: Subscription[] = [];
   private mediaRecorder: MediaRecorder | null = null;
@@ -68,18 +69,25 @@ export class UserChatComponent implements OnInit, OnDestroy {
   private loadChatHistory(userId:string): void {
     const historySub = this.chatService.getChatHistory(userId,'55f810d5-138f-43db-ae79-32b4519a5929',).subscribe(messages => {
       this.messages = messages;
+      this.signalRService.setMessages(messages); 
     });
+    
     this.subscriptions.push(historySub);
   }
   
   async joinChat(): Promise<void> {
-    if (!this.username.trim()) return;
+  if (!this.username.trim()) return;
 
-  const user = await this.signalRService.startConnection(this.username, false);
-  this.currentUserId = user.id;
+  try {
+    const user = await this.signalRService.startConnection(this.username, false);
+    this.isConnected = true;
 
-  this.loadChatHistory(this.currentUserId);
+    
+    this.loadChatHistory(user.id);
+  } catch (error) {
+    console.error("Failed to join chat:", error);
   }
+}
 
   async sendMessage(): Promise<void> {
     if (!this.newMessage.trim() || !this.isConnected || this.newMessage.length > this.settings.maxCharacters) return;

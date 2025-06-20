@@ -47,13 +47,13 @@
 
             <!-- Image Message -->
             <div *ngIf="message.type === 1">
-              <img [src]="'http://localhost:5000' + message.content" 
+              <img [src]="apiUrl + message.content" 
                    class="img-fluid rounded" style="max-width: 200px;">
             </div>
 
             <!-- Document Message -->
             <div *ngIf="message.type === 2">
-              <a [href]="'http://localhost:5000' + message.content" 
+              <a [href]="apiUrl  + message.content" 
                  target="_blank" class="text-decoration-none">
                 📄 {{message.fileName}}
               </a>
@@ -62,7 +62,7 @@
             <!-- Voice Message -->
             <div *ngIf="message.type === 3">
               <audio controls>
-                <source [src]="'http://localhost:5000' + message.content" type="audio/wav">
+                <source [src]="apiUrl + message.content" type="audio/wav">
               </audio>
             </div>
 

@@ -7,6 +7,7 @@ import { ChatSettings } from '../../models/chat-settings.model';
 import { Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { environment } from '../../environment/environment';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -23,6 +24,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   settings: ChatSettings = { maxCharacters: 500, maxVoiceMinutes: 5, inactivityTimeoutMinutes: 1 };
   isRecording = false;
   recordingTimer = 0;
+  apiUrl= environment.apiUrl;
   
   private subscriptions: Subscription[] = [];
   private mediaRecorder: MediaRecorder | null = null;
@@ -80,6 +82,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private loadChatHistory(userId:string): void {
     const historySub = this.chatService.getChatHistory('55f810d5-138f-43db-ae79-32b4519a5929', userId).subscribe(messages => {
       this.messages = messages;
+      this.signalRService.setMessages(messages);
     });
     this.subscriptions.push(historySub);
   }

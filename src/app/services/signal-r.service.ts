@@ -3,6 +3,7 @@ import {HubConnection, HubConnectionBuilder} from '@microsoft/signalr';
 import { BehaviorSubject } from 'rxjs';
 import { ChatMessage } from '../models/message.model';
 import { User } from '../models/user.model';
+import { environment } from '../environment/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +27,7 @@ export class SignalRService {
   }
 private createConnection(): void {
     this.hubConnection = new HubConnectionBuilder()
-      .withUrl('http://localhost:20408/chathub')
+      .withUrl(environment.apiUrl +'/chathub')
       .build();
 
     this.setupEventListeners();
@@ -35,13 +36,13 @@ private createConnection(): void {
 
   private setupEventListeners(): void {
     this.hubConnection.on('ReceiveMessage', (message: ChatMessage) => {
-      const currentMessages = this.messagesSubject.value;
+       const currentMessages = this.messagesSubject.value ?? [];
       this.messagesSubject.next([...currentMessages, message]);
     });
 
     this.hubConnection.on('MessageSent', (message: ChatMessage) => {
-      const currentMessages = this.messagesSubject.value;
-      this.messagesSubject.next([...currentMessages, message]);
+       const currentMessages = this.messagesSubject.value ?? [];
+       this.messagesSubject.next([...currentMessages, message]);
     });
 
     this.hubConnection.on('MessageSeen', (messageId: string) => {
@@ -54,6 +55,10 @@ private createConnection(): void {
 
 
     this.hubConnection.on('UserJoined', (user: User) => {
+
+      if ( user.userName === "admin") {
+    return;
+  }
       const currentUsers = this.activeUsersSubject.value;
       const existingUserIndex = currentUsers.findIndex(u => u.id === user.id);
       
@@ -133,6 +138,10 @@ private createConnection(): void {
 
     
   }
+
+  public setMessages(messages: ChatMessage[]): void {
+  this.messagesSubject.next(messages ?? []);
+}
 
   public async markMessageSeen(messageId: string): Promise<void> {
     if (this.isConnected) {

@@ -5,11 +5,12 @@ import { Observable } from 'rxjs';
 import { ChatMessage } from '../models/message.model';
 import { User } from '../models/user.model';
 import { ChatSettings } from '../models/chat-settings.model';
+import { environment } from '../environment/environment';
 @Injectable({
   providedIn: 'root'
 })
 export class ChatService {
-  private apiUrl = 'http://localhost:20408/api/chat';
+  private apiUrl = environment.apiUrl + '/api/chat';
 
   constructor(private http: HttpClient) {}
 
