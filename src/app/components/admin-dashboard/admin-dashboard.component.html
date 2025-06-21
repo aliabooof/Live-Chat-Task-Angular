@@ -41,7 +41,7 @@
 
         
         <div class="flex-grow-1 overflow-auto p-3" style="height: 0;">
-          <div *ngFor="let message of messages" class="mb-3">
+          <div *ngFor="let message of messages" class="mb-3" appIntersection (visible)="onMessageVisible(message)">
             <div class="d-flex" [class.justify-content-end]="message.sender?.isAdmin">
               <div class="message-bubble" 
                    [class.admin-message]="message.sender?.isAdmin"

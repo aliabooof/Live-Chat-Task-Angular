@@ -33,6 +33,9 @@ export class SignalRService {
     this.setupEventListeners();
   }
 
+  public setActiveUsers(users: User[]): void {
+  this.activeUsersSubject.next(users);
+}
 
   private setupEventListeners(): void {
     this.hubConnection.on('ReceiveMessage', (message: ChatMessage) => {

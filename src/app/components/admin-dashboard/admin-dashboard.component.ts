@@ -8,10 +8,11 @@ import { Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environment/environment';
+import { IntersectionDirective } from '../../directives/intersection.directive';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [FormsModule,CommonModule],
+  imports: [FormsModule,CommonModule,IntersectionDirective],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.css'
 })
@@ -41,6 +42,7 @@ showImageModal: boolean = false;
     this.initializeAdmin();
     this.setupSubscriptions();
     this.loadSettings();
+    this.loadInitialActiveUsers();
   }
 
   ngOnDestroy(): void {
@@ -51,6 +53,14 @@ showImageModal: boolean = false;
   private async initializeAdmin(): Promise<void> {
     await this.signalRService.startConnection('admin', true);
   }
+
+private loadInitialActiveUsers(): void {
+  const sub = this.chatService.getActiveUsers().subscribe(users => {
+    const filtered = users.filter(u => !u.isAdmin); 
+    this.signalRService.setActiveUsers(filtered);   
+  });
+  this.subscriptions.push(sub);
+}
 
   private setupSubscriptions(): void {
     const usersSub = this.signalRService.activeUsers$.subscribe(users => {
@@ -199,5 +209,10 @@ extractOriginalFileName(path: string): string {
 
 
   return nameParts.length > 1 ? nameParts.slice(1).join('_') : fileName;
+}
+onMessageVisible(message: ChatMessage): void {
+  if (!message.isSeen && !message.sender?.isAdmin) {
+    this.signalRService.markMessageSeen(message.id);
+  }
 }
 }

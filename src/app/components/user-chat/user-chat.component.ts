@@ -7,11 +7,12 @@ import { Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environment/environment';
+import { IntersectionDirective } from '../../directives/intersection.directive';
 
 @Component({
   selector: 'app-user-chat',
   standalone:true,
-  imports: [FormsModule,CommonModule],
+  imports: [FormsModule,CommonModule,IntersectionDirective],
   templateUrl: './user-chat.component.html',
   styleUrl: './user-chat.component.css'
 })
@@ -189,5 +190,11 @@ extractOriginalFileName(path: string): string {
 
 
   return nameParts.length > 1 ? nameParts.slice(1).join('_') : fileName;
+}
+
+onMessageVisible(message: ChatMessage): void {
+  if (!message.isSeen && message.sender?.isAdmin) {
+    this.signalRService.markMessageSeen(message.id);
+  }
 }
 }
