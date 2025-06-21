@@ -27,6 +27,9 @@ export class UserChatComponent implements OnInit, OnDestroy {
   isRecording = false;
   recordingTimer = 0;
   apiUrl=environment.apiUrl;
+
+    previewImageUrl: string = '';
+showImageModal: boolean = false;
   private currentUserId = '';
   private subscriptions: Subscription[] = [];
   private mediaRecorder: MediaRecorder | null = null;
@@ -66,11 +69,19 @@ export class UserChatComponent implements OnInit, OnDestroy {
     this.subscriptions.push(settingsSub);
   }
 
+
   private loadChatHistory(userId:string): void {
     const historySub = this.chatService.getChatHistory(userId,'55f810d5-138f-43db-ae79-32b4519a5929',).subscribe(messages => {
       this.messages = messages;
-      this.signalRService.setMessages(messages); 
+      this.signalRService.setMessages(messages);
+      
+      messages
+      .filter(m => !m.isSeen && m.sender?.isAdmin)
+      .forEach(m => this.signalRService.markMessageSeen(m.id));
     });
+ 
+
+    
     
     this.subscriptions.push(historySub);
   }
@@ -155,4 +166,28 @@ export class UserChatComponent implements OnInit, OnDestroy {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
+
+
+
+
+openImageModal(imageUrl: string): void {
+  this.previewImageUrl = imageUrl;
+  this.showImageModal = true;
+}
+
+closeImageModal(): void {
+  this.showImageModal = false;
+  this.previewImageUrl = '';
+}
+
+extractOriginalFileName(path: string): string {
+  if (!path) return '';
+  
+  const parts = path.split('/');
+  const fileName = parts[parts.length - 1];
+  const nameParts = fileName.split('_');
+
+
+  return nameParts.length > 1 ? nameParts.slice(1).join('_') : fileName;
+}
 }

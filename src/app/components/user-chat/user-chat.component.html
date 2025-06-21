@@ -1,77 +1,85 @@
 <div class="container-fluid h-100">
-  <!-- Login Section -->
+
   <div *ngIf="!isConnected" class="d-flex align-items-center justify-content-center h-100">
     <div class="card" style="width: 400px;">
       <div class="card-body">
         <h5 class="card-title text-center">Join Chat</h5>
         <div class="mb-3">
           <label for="username" class="form-label">Your Name</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            id="username"
-            [(ngModel)]="username"
-            (keyup.enter)="joinChat()"
+          <input type="text" class="form-control" id="username" [(ngModel)]="username" (keyup.enter)="joinChat()"
             placeholder="Enter your name">
         </div>
-        <button 
-          (click)="joinChat()" 
-          [disabled]="!username.trim()"
-          class="btn btn-primary w-100">
+        <button (click)="joinChat()" [disabled]="!username.trim()" class="btn btn-primary w-100">
           Start Chat
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Chat Section -->
+
   <div *ngIf="isConnected" class="d-flex flex-column h-100">
-    <!-- Chat Header -->
+
     <div class="border-bottom p-3 bg-primary text-white">
       <h5 class="mb-0">Live Support Chat</h5>
       <small>Connected as: {{username}}</small>
     </div>
 
-    <!-- Messages -->
+
     <div class="flex-grow-1 overflow-auto p-3" style="height: 0;">
       <div *ngFor="let message of messages" class="mb-3">
         <div class="d-flex" [class.justify-content-end]="!message.sender?.isAdmin">
-          <div class="message-bubble" 
-               [class.admin-message]="message.sender?.isAdmin"
-               [class.user-message]="!message.sender?.isAdmin">
-            
-            <!-- Text Message -->
+          <div class="message-bubble" [class.admin-message]="message.sender?.isAdmin"
+            [class.user-message]="!message.sender?.isAdmin">
+
+
             <div *ngIf="message.type === 0">
               {{message.content}}
             </div>
 
-            <!-- Image Message -->
+
             <div *ngIf="message.type === 1">
-              <img [src]="apiUrl + message.content" 
-                   class="img-fluid rounded" style="max-width: 200px;">
+
+              <img [src]="apiUrl + message.content" class="img-fluid rounded" style="max-width: 200px; cursor: pointer;"
+                (click)="openImageModal(apiUrl + message.content)">
+              <div class="small text-muted mt-1">
+                {{ extractOriginalFileName(message.content) }}
+              </div>
+            </div>
+            <div *ngIf="showImageModal" class="modal-backdrop" (click)="closeImageModal()">
+              <div class="modal-content">
+                <img [src]="previewImageUrl" class="img-fluid">
+              </div>
             </div>
 
-            <!-- Document Message -->
             <div *ngIf="message.type === 2">
-              <a [href]="apiUrl  + message.content" 
-                 target="_blank" class="text-decoration-none">
-                📄 {{message.fileName}}
+              <a [href]="apiUrl  + message.content" target="_blank" class="text-decoration-none">
+                📄
               </a>
+              <div class="small text-muted mt-1">
+                {{ extractOriginalFileName(message.content) }}
+              </div>
             </div>
 
-            <!-- Voice Message -->
+
             <div *ngIf="message.type === 3">
               <audio controls>
                 <source [src]="apiUrl + message.content" type="audio/wav">
               </audio>
+              <div class="small text-muted mt-1">
+                {{ extractOriginalFileName(message.content) }}
+              </div>
             </div>
 
             <div class="message-info">
               <small class="text-muted">
-                {{message.timestamp | date:'short'}}
+                {{ message.timestamp | date:'short' }}
                 <span *ngIf="!message.sender?.isAdmin">
-                  <span *ngIf="message.isSent">✓</span>
-                  <span *ngIf="message.isSeen">✓✓</span>
+                  <ng-container *ngIf="message.isSeen; else sentOnly">
+                    <span title="Seen">✓✓</span>
+                  </ng-container>
+                  <ng-template #sentOnly>
+                    <span title="Sent">✓</span>
+                  </ng-template>
                 </span>
               </small>
             </div>
@@ -80,17 +88,12 @@
       </div>
     </div>
 
-    <!-- Message Input -->
+
     <div class="border-top p-3">
       <div class="input-group mb-2">
-        <textarea 
-          [(ngModel)]="newMessage"
-          (keyup.enter)="sendMessage()"
-          [maxlength]="settings.maxCharacters"
-          class="form-control"
-          placeholder="Type your message..."
-          rows="2"></textarea>
-        
+        <textarea [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" [maxlength]="settings.maxCharacters"
+          class="form-control" placeholder="Type your message..." rows="2"></textarea>
+
         <div class="input-group-text">
           <small [class.text-danger]="newMessage.length > settings.maxCharacters * 0.9">
             {{newMessage.length}}/{{settings.maxCharacters}}
@@ -99,26 +102,25 @@
       </div>
 
       <div class="d-flex gap-2 flex-wrap">
-        <button (click)="sendMessage()" 
-                [disabled]="!newMessage.trim() || newMessage.length > settings.maxCharacters" 
-                class="btn btn-primary">
+        <button (click)="sendMessage()" [disabled]="!newMessage.trim() || newMessage.length > settings.maxCharacters"
+          class="btn btn-primary">
           Send
         </button>
 
-        <!-- File Upload Buttons -->
-        <input type="file" #imageInput (change)="onFileSelected($event, 'image')" 
-               accept="image/*" style="display: none;">
+
+        <input type="file" #imageInput (change)="onFileSelected($event, 'image')" accept="image/*"
+          style="display: none;">
         <button (click)="imageInput.click()" class="btn btn-outline-secondary">
           📷 Photo
         </button>
 
-        <input type="file" #docInput (change)="onFileSelected($event, 'document')" 
-               accept=".pdf,.doc,.docx,.txt,.xlsx,.pptx" style="display: none;">
+        <input type="file" #docInput (change)="onFileSelected($event, 'document')"
+          accept=".pdf,.doc,.docx,.txt,.xlsx,.pptx" style="display: none;">
         <button (click)="docInput.click()" class="btn btn-outline-secondary">
           📄 File
         </button>
 
-        <!-- Voice Recording -->
+
         <button *ngIf="!isRecording" (click)="startRecording()" class="btn btn-outline-secondary">
           🎤 Voice
         </button>
@@ -126,7 +128,7 @@
           ⏹️ Stop ({{formatRecordingTime(recordingTimer)}})
         </button>
       </div>
-      
+
       <div class="mt-2">
         <small class="text-muted">
           Maximum voice recording: {{settings.maxVoiceMinutes}} minutes

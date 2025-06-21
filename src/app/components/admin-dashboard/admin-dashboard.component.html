@@ -1,6 +1,6 @@
 <div class="container-fluid h-100">
   <div class="row h-100">
-    <!-- Users Sidebar -->
+    
     <div class="col-md-3 border-end bg-light">
       <div class="p-3">
         <h5>Active Users</h5>
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <!-- Chat Area -->
+   
     <div class="col-md-9 d-flex flex-column">
       <div *ngIf="!selectedUser" class="d-flex align-items-center justify-content-center h-100">
         <div class="text-center text-muted">
@@ -31,7 +31,7 @@
       </div>
 
       <div *ngIf="selectedUser" class="d-flex flex-column h-100">
-        <!-- Chat Header -->
+       
         <div class="border-bottom p-3">
           <h5>Chat with {{selectedUser.userName}}</h5>
           <small class="text-muted">
@@ -39,7 +39,7 @@
           </small>
         </div>
 
-        <!-- Messages -->
+        
         <div class="flex-grow-1 overflow-auto p-3" style="height: 0;">
           <div *ngFor="let message of messages" class="mb-3">
             <div class="d-flex" [class.justify-content-end]="message.sender?.isAdmin">
@@ -47,47 +47,68 @@
                    [class.admin-message]="message.sender?.isAdmin"
                    [class.user-message]="!message.sender?.isAdmin">
                 
-                <!-- Text Message -->
+                
                 <div *ngIf="message.type === 0">
                   {{message.content}}
                 </div>
 
-                <!-- Image Message -->
-                <div *ngIf="message.type === 1">
-                  <img [src]="apiUrl + message.content" 
-                       class="img-fluid rounded" style="max-width: 200px;">
-                </div>
+                
+            <div *ngIf="message.type === 1">
+              
+              <img [src]="apiUrl + message.content"
+                  class="img-fluid rounded"
+                  style="max-width: 200px; cursor: pointer;"
+                  (click)="openImageModal(apiUrl + message.content)">
+                  <div class="small text-muted mt-1">
+    {{ extractOriginalFileName(message.content) }}
+  </div>
+            </div>
+      <div *ngIf="showImageModal" class="modal-backdrop" (click)="closeImageModal()">
+        <div class="modal-content">
+          <img [src]="previewImageUrl" class="img-fluid">
+        </div>
+      </div>
+            
+            <div *ngIf="message.type === 2">
+              <a [href]="apiUrl  + message.content" 
+                 target="_blank" class="text-decoration-none">
+                📄 
+              </a>
+              <div class="small text-muted mt-1">
+    {{ extractOriginalFileName(message.content) }}
+  </div>
+            </div>
 
-                <!-- Document Message -->
-                <div *ngIf="message.type === 2">
-                  <a [href]="apiUrl + message.content" 
-                     target="_blank" class="text-decoration-none">
-                    📄 {{message.fileName}}
-                  </a>
-                </div>
+          
+            <div *ngIf="message.type === 3">
+              <audio controls>
+                <source [src]="apiUrl + message.content" type="audio/wav">
+              </audio>
+              <div class="small text-muted mt-1">
+    {{ extractOriginalFileName(message.content) }}
+  </div>
+            </div>
 
-                <!-- Voice Message -->
-                <div *ngIf="message.type === 3">
-                  <audio controls>
-                    <source [src]="apiUrl + message.content" type="audio/wav">
-                  </audio>
-                </div>
 
                 <div class="message-info">
                   <small class="text-muted">
-                    {{message.timestamp | date:'short'}}
-                    <span *ngIf="message.sender?.isAdmin">
-                      <span *ngIf="message.isSent">✓</span>
-                      <span *ngIf="message.isSeen">✓✓</span>
-                    </span>
-                  </small>
+  {{ message.timestamp | date:'short' }}
+  <span *ngIf="message.sender?.isAdmin">
+    <ng-container *ngIf="message.isSeen; else sentOnly">
+      <span title="Seen">✓✓</span>
+    </ng-container>
+    <ng-template #sentOnly>
+      <span title="Sent">✓</span>
+    </ng-template>
+  </span>
+</small>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Message Input -->
+        
         <div class="border-top p-3">
           <div class="input-group">
             <textarea 
@@ -112,7 +133,7 @@
               Send
             </button>
 
-            <!-- File Upload Buttons -->
+            
             <input type="file" #imageInput (change)="onFileSelected($event, 'image')" 
                    accept="image/*" style="display: none;">
             <button (click)="imageInput.click()" class="btn btn-outline-secondary">
@@ -125,7 +146,7 @@
               📄 Document
             </button>
 
-            <!-- Voice Recording -->
+            
             <button *ngIf="!isRecording" (click)="startRecording()" class="btn btn-outline-secondary">
               🎤 Record
             </button>

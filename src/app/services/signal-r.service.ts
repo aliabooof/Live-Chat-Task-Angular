@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {HubConnection, HubConnectionBuilder} from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { BehaviorSubject } from 'rxjs';
 import { ChatMessage } from '../models/message.model';
 import { User } from '../models/user.model';
@@ -15,19 +15,19 @@ export class SignalRService {
   private isConnected = false;
 
   private messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
-   private activeUsersSubject = new BehaviorSubject<User[]>([]);
+  private activeUsersSubject = new BehaviorSubject<User[]>([]);
   private connectionStatusSubject = new BehaviorSubject<boolean>(false);
 
   public messages$ = this.messagesSubject.asObservable();
   public activeUsers$ = this.activeUsersSubject.asObservable();
   public connectionStatus$ = this.connectionStatusSubject.asObservable();
 
-  constructor() { 
+  constructor() {
     this.createConnection();
   }
-private createConnection(): void {
+  private createConnection(): void {
     this.hubConnection = new HubConnectionBuilder()
-      .withUrl(environment.apiUrl +'/chathub')
+      .withUrl(environment.apiUrl + '/chathub')
       .build();
 
     this.setupEventListeners();
@@ -36,18 +36,18 @@ private createConnection(): void {
 
   private setupEventListeners(): void {
     this.hubConnection.on('ReceiveMessage', (message: ChatMessage) => {
-       const currentMessages = this.messagesSubject.value ?? [];
+      const currentMessages = this.messagesSubject.value ?? [];
       this.messagesSubject.next([...currentMessages, message]);
     });
 
     this.hubConnection.on('MessageSent', (message: ChatMessage) => {
-       const currentMessages = this.messagesSubject.value ?? [];
-       this.messagesSubject.next([...currentMessages, message]);
+      const currentMessages = this.messagesSubject.value ?? [];
+      this.messagesSubject.next([...currentMessages, message]);
     });
 
     this.hubConnection.on('MessageSeen', (messageId: string) => {
       const currentMessages = this.messagesSubject.value;
-      const updatedMessages = currentMessages.map(msg => 
+      const updatedMessages = currentMessages.map(msg =>
         msg.id === messageId ? { ...msg, isSeen: true } : msg
       );
       this.messagesSubject.next(updatedMessages);
@@ -56,23 +56,23 @@ private createConnection(): void {
 
     this.hubConnection.on('UserJoined', (user: User) => {
 
-      if ( user.userName === "admin") {
-    return;
-  }
+      if (user.userName === "admin") {
+        return;
+      }
       const currentUsers = this.activeUsersSubject.value;
       const existingUserIndex = currentUsers.findIndex(u => u.id === user.id);
-      
+
       if (existingUserIndex >= 0) {
         currentUsers[existingUserIndex] = user;
-      } else {
+      } else {  
         currentUsers.push(user);
       }
-      
+
       this.activeUsersSubject.next([...currentUsers]);
     });
 
 
-     this.hubConnection.on('UserLeft', (user: User) => {
+    this.hubConnection.on('UserLeft', (user: User) => {
       const currentUsers = this.activeUsersSubject.value;
       const filteredUsers = currentUsers.filter(u => u.id !== user.id);
       this.activeUsersSubject.next(filteredUsers);
@@ -85,63 +85,63 @@ private createConnection(): void {
   }
 
   public async startConnection(username: string, isAdmin: boolean = false): Promise<User> {
-  if (this.isConnected) return this.currentUser;
+    if (this.isConnected) return this.currentUser;
 
-  try {
-    await this.hubConnection.start();
-    this.isConnected = true;
-    this.connectionStatusSubject.next(true);
+    try {
+      await this.hubConnection.start();
+      this.isConnected = true;
+      this.connectionStatusSubject.next(true);
 
-    const user: User = await this.hubConnection.invoke('JoinChat', username, isAdmin);
-    this.currentUser = user;
+      const user: User = await this.hubConnection.invoke('JoinChat', username, isAdmin);
+      this.currentUser = user;
 
-    console.log('Connected as:', user);
-    return user;
+      console.log('Connected as:', user);
+      return user;
 
-  } catch (error) {
-    console.error('Error starting SignalR connection:', error);
-    this.connectionStatusSubject.next(false);
-    throw error;
+    } catch (error) {
+      console.error('Error starting SignalR connection:', error);
+      this.connectionStatusSubject.next(false);
+      throw error;
+    }
   }
-}
 
   public async sendMessage(receiverUsername: string, content: string, messageType: string): Promise<void> {
     if (!this.isConnected) {
-    console.warn("SignalR is not connected.");
-    return;
-  }
-
-  
-  if (!receiverUsername || !content || !messageType) {
-    console.error("Invalid parameters for sendMessage", {
-      receiverUsername, content, messageType
-    });
-    return;
-  }
-
-  const payload = {
-    receiverUsername,
-    content,
-    messageType
-  };
-
-  try {
-    // Try to stringify before sending (client-side validation)
-    const json = JSON.stringify(payload);
-    console.log("Sending message payload:", json);
-
-    await this.hubConnection.invoke('SendMessage', receiverUsername, content, messageType);
-  } catch (err) {
-    console.error("Error while preparing or sending message:", err);
-  }
+      console.warn("SignalR is not connected.");
+      return;
+    }
 
 
-    
+    if (!receiverUsername || !content || !messageType) {
+      console.error("Invalid parameters for sendMessage", {
+        receiverUsername, content, messageType
+      });
+      return;
+    }
+
+    const payload = {
+      receiverUsername,
+      content,
+      messageType
+    };
+
+    try {
+
+      const json = JSON.stringify(payload);
+      console.log("Sending message payload:", json);
+
+      await this.hubConnection.invoke('SendMessage', receiverUsername, content, messageType);
+    } catch (err) {
+      console.error("Error while preparing or sending message:", err);
+    }
+
+
+
   }
 
   public setMessages(messages: ChatMessage[]): void {
-  this.messagesSubject.next(messages ?? []);
-}
+    this.messagesSubject.next(messages ?? []);
+  }
 
   public async markMessageSeen(messageId: string): Promise<void> {
     if (this.isConnected) {
@@ -157,5 +157,5 @@ private createConnection(): void {
     }
   }
 
-  
+
 }
